@@ -9,9 +9,6 @@ def nothing(x):
 #cv2.namedWindow('edge')
 cv2.namedWindow('Video')
 cv2.moveWindow('Video',5,5)
-cv2.namedWindow('Navig',cv2.WINDOW_AUTOSIZE)
-cv2.resizeWindow('Navig',400,100)
-cv2.moveWindow('Navig',700,5)
 #cv2.namedWindow('Fin')
 #cv2.namedWindow('Win')
 kernel = np.ones((5, 5), np.uint8)
@@ -22,7 +19,6 @@ cv2.createTrackbar('val1', 'Video', 37, 1000, nothing)
 cv2.createTrackbar('val2', 'Video', 43, 1000, nothing)
 cv2.createTrackbar('bin', 'Video',20,50,nothing)
 cv2.createTrackbar('erode', 'Video',4,10,nothing)#after plenty of testing
-imn=cv2.imread('blank.bmp')
 #cv2.createTrackbar('dilate', 'edge',0,10,nothing)
 def pretty_depth(depth):
     np.clip(depth, 0, 2**10 - 1, depth)
@@ -31,8 +27,6 @@ def pretty_depth(depth):
     return depth
 
 while 1:
-	imn=cv2.imread('blank.bmp')
-	cv2.imshow('Navig',imn)
 	flag120=[1, 1, 1, 1]
 	flag140=[1, 1, 1, 1]
 	f14=0
@@ -45,7 +39,7 @@ while 1:
     	#orig = cv2.cvtColor(orig,cv2.COLOR_BGR2RGB) #to get RGB image, which we don't want
 	#cv2.flip(orig, 0, orig)#since we keep kinect upside-down
     	#cv2.flip(orig, 1,orig)# thus correcting upside-down mirror effect
-    	cv2.flip(dst, 0, dst)#since we keep kinect upside-down
+    	#cv2.flip(dst, 0, dst)#since we keep kinect upside-down
 	cv2.flip(dst, 1,dst)# thus correcting upside-down mirror effect
     
 #rectangular border (improved edge detection + closed contours)___________________________ 
@@ -118,28 +112,17 @@ while 1:
 			if (dst[spac*i,spac*j]==80):
 				f8=1
 				cv2.putText(dst,"0",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-				cv2.putText(dst,"Collision Alert!",(30,30),cv2.FONT_HERSHEY_TRIPLEX,1,(2),1)
-				imn=cv2.imread("Collision Alert.bmp")
-				cv2.imshow('Navig',imn)
 			if (dst[spac*i,spac*j]==100):
 				f10=1
 				cv2.putText(dst,"1",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-				cv2.putText(dst,"Very Close proximity. Reverse",(30,60),cv2.FONT_HERSHEY_TRIPLEX,1,(2),1)
-				if(f8==0):
-					imn=cv2.imread("VCP Reverse.bmp")
-					cv2.imshow('Navig',imn)
 			if (dst[spac*i,spac*j]==120):
 				f12=1
                 		cv2.putText(dst, "2", (spac*j, spac*i), cv2.FONT_HERSHEY_PLAIN, 1, (0, 200, 20), 2)
                 		flag120 = RegionCheck(spac*j, flag120)
-				if(f8==0 and f10==0):
-					imgshow(flag120,120,imn,'Navig')
 			if (dst[spac*i,spac*j]==140):
 				f14=1
 				cv2.putText(dst,"3",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
 				flag140 = RegionCheck(spac*j, flag140)
-				if(f8==0 and f10==0 and f12==0):
-					imgshow(flag140,140,imn,'Navig')
 			if (dst[spac*i,spac*j]==160):
 				cv2.putText(dst,"4",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
 			if (dst[spac*i,spac*j]==180):
@@ -155,18 +138,6 @@ while 1:
     #cv2.imshow('Input',orig)
 	#print flag
 	#cv2.destroyWindow('Navig')
-	if(flag120[1:3]==[1, 1] and f12==1):
-		#print flag, "FWD"
-		cv2.putText(dst," frwd",(325,90),cv2.FONT_HERSHEY_DUPLEX,1,(2),1)
-	elif(flag120[2:4]==[1, 1] and f12==1):
-		#print flag, "RIGHT"
-		cv2.putText(dst," right",(325,90),cv2.FONT_HERSHEY_DUPLEX,1,(2),1)
-	elif(flag120[0:2]==[1, 1] and f12==1):
-		#print flag, "LEFT"
-		cv2.putText(dst," left",(325,90),cv2.FONT_HERSHEY_DUPLEX,1,(2),1)
-	elif(f12==1):
-		#print flag, "BACK"
-		cv2.putText(dst," back",(325,90),cv2.FONT_HERSHEY_DUPLEX,1,(2),1)
 	cv2.line(dst,(130,0),(130,480),(0),1)
 	cv2.line(dst,(320,0),(320,480),(0),1)
 	cv2.line(dst,(510,0),(510,480),(0),1)
