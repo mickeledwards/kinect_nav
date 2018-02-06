@@ -1,7 +1,26 @@
+# Imports etc
 import freenect
 import cv2
 import numpy as np
-from functions import *
+from Adafruit_PWM_Servo_Driver import PWM
+import time
+
+# Initialise the PWM device using the default address
+pwm = PWM(0x40)
+servoMin = 150  # Min pulse length out of 4096
+servoMax = 500  # Max pulse length out of 4096
+
+def setServoPulse(channel, pulse):
+  pulseLength = 1000000                   # 1,000,000 us per second
+  pulseLength /= 60                       # 60 Hz
+  print "%d us per period" % pulseLength
+  pulseLength /= 4096                     # 12 bits of resolution
+  print "%d us per bit" % pulseLength
+  pulse *= 1000
+  pulse /= pulseLength
+  pwm.setPWM(channel, 0, pulse)
+
+pwm.setPWMFreq(60)                        # Set frequency to 60 Hz
 
 def nothing(x):
     pass
@@ -18,27 +37,6 @@ def RegionCheck(foo, ListPath):#foo defines x-coordinate of point
         ListPath[3] = 0
 
     return ListPath
-
-def imgshow(ListPath,t,imn,Winname):
-	
-	#insert a ListPath, t, input img to read
-	
-	if(ListPath[1:3]==[1, 1]):
-		imn = cv2.imread(str(t)+"frwd.bmp")
-		cv2.imshow('Navig',imn)
-	elif(ListPath[2:4]==[1, 1]):
-		imn = cv2.imread(str(t)+"right.bmp")
-		cv2.imshow('Navig',imn)
-	elif(ListPath[0:2]==[1, 1]):
-		imn = cv2.imread(str(t)+"left.bmp")
-		cv2.imshow('Navig',imn)
-	else:
-		imn = cv2.imread(str(t)+"back.bmp")
-		cv2.imshow('Navig',imn)
-	
-	#pass
-def DirectBot():
-    pass
 
 #cv2.namedWindow('edge')
 cv2.namedWindow('Video')
@@ -61,13 +59,9 @@ def pretty_depth(depth):
     return depth
 
 while 1:
-	flag120=[1, 1, 1, 1]
-	flag140=[1, 1, 1, 1]
-	f14=0
-	f12=0
-	f10=0
-	f8=0
-#get kinect input__________________________________________________________________________
+	distanceint=0
+
+	#get kinect input__________________________________________________________________________
 	dst = pretty_depth(freenect.sync_get_depth()[0])#input from kinect
     	#orig = freenect.sync_get_video()[0]
     	#orig = cv2.cvtColor(orig,cv2.COLOR_BGR2RGB) #to get RGB image, which we don't want
@@ -76,10 +70,10 @@ while 1:
     	#cv2.flip(dst, 0, dst)#since we keep kinect upside-down
 	cv2.flip(dst, 1,dst)# thus correcting upside-down mirror effect
     
-#rectangular border (improved edge detection + closed contours)___________________________ 
-	cv2.rectangle(dst,(0,0),(640,480),(40,100,0),2)
+	#rectangular border (improved edge detection + closed contours)___________________________ 
+		#cv2.rectangle(dst,(0,0),(640,480),(40,100,0),2)
 	   
-#image binning (for distinct edges)________________________________________________________
+	#image binning (for distinct edges)________________________________________________________
     	binn=cv2.getTrackbarPos('bin', 'Video') 
     	e=cv2.getTrackbarPos('erode', 'Video') 
     	#d=cv2.getTrackbarPos('dilate', 'edge') 
@@ -89,7 +83,7 @@ while 1:
     	#dst=cv2.dilate(dst, kernel, iterations=d)#dilations don't help
     
  	  
-#Video detection___________________________________________________________________________
+	#Video detection___________________________________________________________________________
     	v1 = 37
     	v2 = 43
     	v1 = cv2.getTrackbarPos('val1', 'Video')
@@ -97,26 +91,12 @@ while 1:
     	edges = cv2.Canny(dst, v1, v2)
     	#cv2.imshow('edge', edges)
 
-#finding contours__________________________________________________________________________
+	#finding contours__________________________________________________________________________
     	contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     	cv2.drawContours(dst, contours, -1, (0, 0, 255), -1)
-    #cv2.drawContours(orig, contours, -1, (0, 0, 255), -1)
-#finding contour center of mass (moments)___________________________________________________
-    	'''cx=0
-    	cy=0
-    	try:
-        	for i in range(len(contours)):
-            		M = cv2.moments(contours[i])
-	    
-            		cx = int(M['m10']/M['m00'])
-            		cy = int(M['m01']/M['m00'])
-            		#cv2.circle(dst, (cx, cy), 6, (0, 255, 0), 3)
-           # cx = int(cx/len(contours))
-           # cy = int(cy/len(contours))
-    	except:
-      		pass'''
+ 
 
-#boundingRect approach_______________________________________________________________________
+	#boundingRect approach_______________________________________________________________________
     	cv2.createTrackbar('epsilon', 'Video', 1, 100, nothing)#for approxPolyDP
     	ep=cv2.getTrackbarPos('epsilon', 'Video') 
     	#for i in range(len(contours)):
@@ -129,53 +109,145 @@ while 1:
 			#box = cv2.cv.BoxPoints(rect)                     Rotated Rect approach failed
 			#box = np.int0(box)
 			#cv2.drawContours(dst,[box],0,(50,0,255),2)
-#approxPolyDP approach________________________________________________________________________
+	#approxPolyDP approach________________________________________________________________________
 		#approx = cv2.approxPolyDP(contours[i],(ep/100)*cv2.arcLength(contours[i],True),True)
 		#cv2.drawContours(dst, approx, -1, (0, 0, 2), 1)
 
-#defined points approach (to check: runtime)________________________________________________
-	cv2.createTrackbar('spacing', 'Video', 30, 100, nothing)#for approxPolyDP
-    	spac=cv2.getTrackbarPos('spacing', 'Video') 
+	#defined points approach (to check: runtime)________________________________________________
+	#cv2.createTrackbar('spacing', 'Video', 65, 100, nothing)#for approxPolyDP
+    	spac=65 
     	(rows,cols)=dst.shape # 480 rows and 640 cols
     	#print cols
-	
 
-    	for i in range(rows/spac): #note the presence of colon
-		for j in range(cols/spac):
-			cv2.circle(dst, (spac*j,spac*i), 1, (0, 255, 0), 1)
+	incrx=0
+	incry=0
+	distlist = []
+
+    	for i in range(8): #note the presence of colon
+		for j in range(8):
+			#cv2.circle(dst, (spac*j,spac*i), 1, (0, 255, 0), 1)
+			
 			if (dst[spac*i,spac*j]==80):
-				f8=1
-				cv2.putText(dst,"0",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-			if (dst[spac*i,spac*j]==100):
-				f10=1
-				cv2.putText(dst,"1",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-			if (dst[spac*i,spac*j]==120):
-				f12=1
-                		cv2.putText(dst, "2", (spac*j, spac*i), cv2.FONT_HERSHEY_PLAIN, 1, (0, 200, 20), 2)
-                		flag120 = RegionCheck(spac*j, flag120)
-			if (dst[spac*i,spac*j]==140):
-				f14=1
+				cv2.putText(dst,"0",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				distlist.append(7)
+			elif (dst[spac*i,spac*j]==100):
+				cv2.putText(dst,"1",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				distlist.append(6)
+			elif (dst[spac*i,spac*j]==120):
+                		cv2.putText(dst,"2",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+                		distlist.append(5)
+			elif (dst[spac*i,spac*j]==140):
 				cv2.putText(dst,"3",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				flag140 = RegionCheck(spac*j, flag140)
-			if (dst[spac*i,spac*j]==160):
+				distlist.append(4)
+			elif (dst[spac*i,spac*j]==160):
 				cv2.putText(dst,"4",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-			if (dst[spac*i,spac*j]==180):
+				distlist.append(3)
+			elif (dst[spac*i,spac*j]==180):
 				cv2.putText(dst,"5",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-			if (dst[spac*i,spac*j]==200):
+				distlist.append(2)
+			elif (dst[spac*i,spac*j]==200):
 				cv2.putText(dst,"6",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-			if (dst[spac*i,spac*j]==220):
+				distlist.append(1)
+			elif (dst[spac*i,spac*j]==220):
 				cv2.putText(dst,"7",(spac*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-
-
-				
-#imshow outputs______________________________________________________________________   
+				distlist.append(0)
+                        else:
+                                distlist.append(0)
+			#print distlist
+			
+			#incry=incry+1
+			#print '\n'
+		#incrx=incrx+1
+                print distlist
+                print '\n'
+		distlist = []
+        				
+	#imshow outputs______________________________________________________________________   
     #cv2.imshow('Input',orig)
 	#print flag
 	#cv2.destroyWindow('Navig')
-	cv2.line(dst,(130,0),(130,480),(0),1)
-	cv2.line(dst,(320,0),(320,480),(0),1)
-	cv2.line(dst,(510,0),(510,480),(0),1)
+	#cv2.line(dst,(130,0),(130,480),(0),1)
+	#cv2.line(dst,(320,0),(320,480),(0),1)
+	#cv2.line(dst,(510,0),(510,480),(0),1)
     	cv2.imshow('Video', dst)
     	
        	if(cv2.waitKey(1) & 0xFF == ord('b')):
         	break
+
+
+
+#Servo Movements______________________________________________________________________   
+# while (True):
+#   # Change speed of continuous servo on channel O
+#   pwm.setPWM(0, 0, servoMin)
+#   pwm.setPWM(1, 0, servoMin)
+#   pwm.setPWM(2, 0, servoMin)
+#   pwm.setPWM(3, 0, servoMin)
+#   pwm.setPWM(4, 0, servoMin)
+#   pwm.setPWM(5, 0, servoMin)
+#   pwm.setPWM(6, 0, servoMin)
+#   pwm.setPWM(7, 0, servoMin)
+#   time.sleep(1)
+#   pwm.setPWM(0, 0, servoMax)
+#   pwm.setPWM(1, 0, servoMax)
+#   pwm.setPWM(2, 0, servoMax)
+#   pwm.setPWM(3, 0, servoMax)
+#   pwm.setPWM(4, 0, servoMax)
+#   pwm.setPWM(5, 0, servoMax)
+#   pwm.setPWM(6, 0, servoMax)
+#   pwm.setPWM(7, 0, servoMax)
+#   time.sleep(1)
+#   pwm.setPWM(8, 0, servoMin)
+#   pwm.setPWM(9, 0, servoMin)
+#   pwm.setPWM(10, 0, servoMin)
+#   pwm.setPWM(11, 0, servoMin)
+#   pwm.setPWM(12, 0, servoMin)
+#   pwm.setPWM(13, 0, servoMin)
+#   pwm.setPWM(14, 0, servoMin)
+#   pwm.setPWM(15, 0, servoMin)
+#   time.sleep(1)
+#   pwm.setPWM(8, 0, servoMax)
+#   pwm.setPWM(9, 0, servoMax)
+#   pwm.setPWM(10, 0, servoMax)
+#   pwm.setPWM(11, 0, servoMax)
+#   pwm.setPWM(12, 0, servoMax)
+#   pwm.setPWM(13, 0, servoMax)
+#   pwm.setPWM(14, 0, servoMax)
+#   pwm.setPWM(15, 0, servoMax)
+#   time.sleep(1)
+#   pwm2.setPWM(0, 1, servoMin)
+#   pwm2.setPWM(1, 1, servoMin)
+#   pwm2.setPWM(2, 1, servoMin)
+#   pwm2.setPWM(3, 1, servoMin)
+#   pwm2.setPWM(4, 1, servoMin)
+#   pwm2.setPWM(5, 1, servoMin)
+#   pwm2.setPWM(6, 1, servoMin)
+#   pwm2.setPWM(7, 1, servoMin)
+#   time.sleep(1)
+#   pwm2.setPWM(0, 1, servoMax)
+#   pwm2.setPWM(1, 1, servoMax)
+#   pwm2.setPWM(2, 1, servoMax)
+#   pwm2.setPWM(3, 1, servoMax)
+#   pwm2.setPWM(4, 1, servoMax)
+#   pwm2.setPWM(5, 1, servoMax)
+#   pwm2.setPWM(6, 1, servoMax)
+#   pwm2.setPWM(7, 1, servoMax)
+#   time.sleep(1)
+#   pwm2.setPWM(8, 1, servoMin)
+#   pwm2.setPWM(9, 1, servoMin)
+#   pwm2.setPWM(10, 1, servoMin)
+#   pwm2.setPWM(11, 1, servoMin)
+#   pwm2.setPWM(12, 1, servoMin)
+#   pwm2.setPWM(13, 1, servoMin)
+#   pwm2.setPWM(14, 1, servoMin)
+#   pwm2.setPWM(15, 1, servoMin)
+#   time.sleep(1)
+#   pwm2.setPWM(8, 1, servoMax)
+#   pwm2.setPWM(9, 1, servoMax)
+#   pwm2.setPWM(10, 1, servoMax)
+#   pwm2.setPWM(11, 1, servoMax)
+#   pwm2.setPWM(12, 1, servoMax)
+#   pwm2.setPWM(13, 1, servoMax)
+#   pwm2.setPWM(14, 1, servoMax)
+#   pwm2.setPWM(15, 1, servoMax)
+#   time.sleep(1)
