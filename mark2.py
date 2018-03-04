@@ -1,12 +1,15 @@
+from __future__ import print_function
 import freenect
 import cv2
 import numpy as np
+from functions import *
 from servofunctions import *
 from Adafruit_PWM_Servo_Driver import PWM
 import time
 
 def nothing(x):
     pass
+
 
 # Initialise the PWM devices
 pwm0 = PWM(0x40)
@@ -42,6 +45,7 @@ def pretty_depth(depth):
     depth = depth.astype(np.uint8)
     return depth
 
+
 while 1:
 	flag120=[1, 1, 1, 1]
 	f12=0
@@ -52,9 +56,9 @@ while 1:
     	#orig = cv2.cvtColor(orig,cv2.COLOR_BGR2RGB) #to get RGB image, which we don't want
 	#cv2.flip(orig, 0, orig)#since we keep kinect upside-down
     	#cv2.flip(orig, 1,orig)# thus correcting upside-down mirror effect
-	dst = cv2.resize(dst,(int(8), int(8)), interpolation = cv2.INTER_AREA)
+	dst = cv2.resize(dst,(int(32), int(32)), interpolation = cv2.INTER_AREA)
 	dst = cv2.resize(dst,(int(640), int(480)), interpolation = cv2.INTER_AREA)
-
+        dst = cv2.flip(dst,1)
 
 #rectangular border (improved edge detection + closed contours)___________________________
 	#cv2.rectangle(dst,(0,0),(640,480),(40,100,0),2)
@@ -118,31 +122,39 @@ while 1:
     	spacj=80
     	rows=480
     	cols=640
+    	motornum=0
     	#print cols
-
+	print("\033c")
 
     	for i in range(0,rows/spac): #note the presence of colon
 		for j in range(0, cols/spacj):
 			cv2.circle(dst, (spacj*j,spac*i), 1, (0, 255, 0), 1)
 			if (dst[spac*i,spac*j]==80):
 				cv2.putText(dst,"0",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
+				motormove(i,j,7,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==100):
 				cv2.putText(dst,"1",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
+				motormove(i,j,6,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==120):
 				cv2.putText(dst,"2",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0),1)
+				motormove(i,j,5,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==140):
 				cv2.putText(dst,"3",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				motormove(i,j,4,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==160):
 				cv2.putText(dst,"4",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				motormove(i,j,3,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==180):
 				cv2.putText(dst,"5",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				motormove(i,j,2,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==200):
 				cv2.putText(dst,"6",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
+				motormove(i,j,1,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==220):
 				cv2.putText(dst,"7",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-
-			print i,j
-		print '\n'
+				motormove(i,j,0,servoMin,servoMax)
+			print(motornum, end='')
+		print ('\n')
 
 
 

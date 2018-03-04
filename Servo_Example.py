@@ -16,7 +16,7 @@ pwm2.setPWMFreq(60)
 pwm3.setPWMFreq(60)
 
 servoMin = 150  # Min pulse length out of 4096
-servoMax = 500  # Max pulse length out of 4096
+servoMax = 550  # Max pulse length out of 4096
 
 def setServoPulse(channel, pulse):
   pulseLength = 1000000                   # 1,000,000 us per second
@@ -26,23 +26,36 @@ def setServoPulse(channel, pulse):
   pulse /= pulseLength
   pwm.setPWM(channel, 0, pulse)
 
-	
-motorcheck()	
-while (True):
+def motorcheck():
+    for pwm in range(0, 4):
+        for servonum in range(0, 16):
+            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMin)
+            time.sleep(0.25)
+            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMax)
+            time.sleep(0.25)
+            print "Servo %d now!" % (servonum)
+    return
 
-	
-	
 def motormove(row,col,dist,servoMin,servoMax):
 	
 	# Turn rows into PWM board
+
+
+
 	if row < 2:
-		pwmsect = 0
-	elif row < 4:
-		pwmsect = 1
-	elif row < 6:
-		pwmsect = 2
-	else:
 		pwmsect = 3
+		print("zero")
+	elif row < 3:
+		pwmsect = 2
+		print("one")
+	elif row < 6:
+		pwmsect = 1
+		print("two")
+	elif row < 8 :
+		pwmsect = 0
+		print("three")
+
+
 		
 	# If the row is even, that means it's on the second line of the PWM. Have the col reflect that
 	if row % 2 == 0:
@@ -50,17 +63,16 @@ def motormove(row,col,dist,servoMin,servoMax):
 		
 	# Use the minimum, maxiumum and gathered distance to find out how far to move servo
 	servodist = servoMin + (dist * ((servoMax - servoMin)/7))
-	
+
 	# Move servo
 	eval('pwm%d' % pwmsect).setPWM(col, 0, servodist)
 	return
 
-def motorcheck():
-    for pwm in range(0, 3):
-        for servonum in range(0, 16):
-            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMin)
-            time.sleep(0.25)
-          #  eval('pwm%d' % pwm).setPWM(servonum, 0, servoMax)
-            time.sleep(0.25)
-            print "Servo %d now!" % (servonum)
-	return
+motorcheck()
+
+while (True):
+
+    row = input("Please enter a row: ")
+    col = input("Please enter a column: ")
+    dist = input("Please enter a number 0-7: ")
+    motormove(row,col,dist,servoMin,servoMax)
