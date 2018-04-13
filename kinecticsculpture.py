@@ -12,10 +12,7 @@ def nothing(x):
 def motorcheck():
     for pwm in range(0, 3):
         for servonum in range(0, 16):
-            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMin)
-            time.sleep(0.25)
             eval('pwm%d' % pwm).setPWM(servonum, 0, servoMax)
-            time.sleep(0.25)
             #print "Servo %d now!" % (servonum)
     return
 
@@ -45,7 +42,6 @@ def pretty_depth(depth):
     depth = depth.astype(np.uint8)
     return depth
 
-
 # Initialise the PWM devices
 pwm0 = PWM(0x40)
 pwm1 = PWM(0x41)
@@ -70,6 +66,7 @@ print('Press ESC in window to stop')
 cv2.createTrackbar('bin', 'Video',20,50,nothing)
 cv2.createTrackbar('erode', 'Video',4,10,nothing)#after plenty of testing
 
+motorcheck()
 while 1:
 #get kinect input__________________________________________________________________________
 	dst = pretty_depth(freenect.sync_get_depth()[0])#input from kinect
@@ -119,28 +116,28 @@ while 1:
 			cv2.circle(dst, (spacj*j,spac*i), 1, (0, 255, 0), 1)
 			if (dst[spac*i,spac*j]==80):
 				cv2.putText(dst,"0",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-				motormove(i,j,7,servoMin,servoMax)
+				motormove(i,j,0,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==100):
 				cv2.putText(dst,"1",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),2)
-				motormove(i,j,6,servoMin,servoMax)
+				motormove(i,j,1,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==120):
 				cv2.putText(dst,"2",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0),1)
-				motormove(i,j,5,servoMin,servoMax)
+				motormove(i,j,2,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==140):
 				cv2.putText(dst,"3",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				motormove(i,j,4,servoMin,servoMax)
+				motormove(i,j,3,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==160):
 				cv2.putText(dst,"4",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				motormove(i,j,3,servoMin,servoMax)
+				motormove(i,j,4,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==180):
 				cv2.putText(dst,"5",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				motormove(i,j,2,servoMin,servoMax)
+				motormove(i,j,5,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==200):
 				cv2.putText(dst,"6",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				motormove(i,j,1,servoMin,servoMax)
+				motormove(i,j,6,servoMin,servoMax)
 			if (dst[spac*i,spac*j]==220):
 				cv2.putText(dst,"7",(spacj*j,spac*i),cv2.FONT_HERSHEY_PLAIN,1,(0,200,20),1)
-				motormove(i,j,0,servoMin,servoMax)
+				motormove(i,j,7,servoMin,servoMax)
 			#print(motornum, end='')
 		#print ('\n')
 

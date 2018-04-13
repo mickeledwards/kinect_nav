@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from Adafruit_PWM_Servo_Driver import PWM
-from servofunctions import motormove, motorcheck
 import time
 
 # Initialise the PWM devices
@@ -28,11 +27,11 @@ def setServoPulse(channel, pulse):
   pwm.setPWM(channel, 0, pulse)
 
 def motorcheck():
-    for pwm in range(0, 3):
+    for pwm in range(0, 4):
         for servonum in range(0, 16):
-            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMin)
-            time.sleep(0.25)
             eval('pwm%d' % pwm).setPWM(servonum, 0, servoMax)
+            time.sleep(0.25)
+            eval('pwm%d' % pwm).setPWM(servonum, 0, servoMin)
             time.sleep(0.25)
             print "Servo %d now!" % (servonum)
     return
